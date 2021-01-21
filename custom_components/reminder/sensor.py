@@ -10,11 +10,13 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
+from homeassistant.components.template.template_entity import TemplateEntity
+
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from homeassistant.const import (
-    ATTR_HIDDEN,
+    ATTR_HIDDEN, ATTR_FRIENDLY_NAME,
     CONF_ENTITIES, CONF_NAME, CONF_ICON,
     WEEKDAYS,
     STATE_ON,
@@ -31,6 +33,7 @@ from .const import (
     CALENDAR_PLATFORM,
     CONF_DATE,
     CONF_PERIOD,
+    CONF_PERIOD_TEMPLATE,
     CONF_EXPIRE_AFTER,
     CONF_FIRST_DATE,
     CONF_FREQUENCY,
@@ -54,18 +57,23 @@ async def async_setup_platform(hass, _, async_add_entities, discovery_info=None)
     async_add_entities([ReminderSensor(hass, discovery_info)], True)
 
 
-class ReminderSensor(RestoreEntity):
+class ReminderSensor(TemplateEntity, RestoreEntity):
     """Reminder Sensor class."""
 
     def __init__(self, hass, config, title=None):
+        """Initialize the Template Media player."""
+        super().__init__(
+        )
         self._config = config
         self._hass = hass
         self._hidden = config.get(ATTR_HIDDEN, False)
-        self._name = title if title is not None else config.get(CONF_NAME)
+        self._name = config.get(CONF_NAME)
+        self._friendly_name = config.get(ATTR_FRIENDLY_NAME)
         self._next_date = None
         self._remaining = 0
         self._tag = config.get(CONF_TAG)
         self._period = config.get(CONF_PERIOD)
+        self._period_template = config.get(CONF_PERIOD_TEMPLATE)
         self._verbose_state = config.get(CONF_VERBOSE_STATE)
         self._state = STATE_OFF
         self._icon = config.get(CONF_ICON)
@@ -89,6 +97,9 @@ class ReminderSensor(RestoreEntity):
         self.hass.data[DOMAIN][SENSOR_PLATFORM][self.entity_id] = self
 
         state = await self.async_get_last_state()
+
+        if self._period_template is not None:
+            self.add_template_attribute("_period", self._period_template)
 
         if not self.hidden:
             if CALENDAR_PLATFORM not in self.hass.data[DOMAIN]:
@@ -194,35 +205,38 @@ class ReminderSensor(RestoreEntity):
         return inside
 
     def next_date_none(self, first_date: date):
-        """Returns single occurrence reminder next date."""
+        """Returns single occurrence reminder next date (including reminder date)."""
         if self._date < first_date:
             return None
         return self._date
 
     def next_date_daily(self, first_date: date):
-        """Returns daily reminder next date occurrence."""
+        """Returns daily reminder next date occurrence (including reminder date)."""
         return first_date + relativedelta(days=(self._period - 1))
         
     def next_date_weekly(self, first_date: date):
         """Returns weekly reminder next date occurrence."""
-        pass
+        next_date = first_date + relativedelta(days=(self._date.weekday() - first_date.weekday()))
+        if next_date < first_date:
+            next_date += relativedelta(days=(7 * self._period))
+        return next_date
 
     def next_date_monthly(self, first_date: date):
-        """Returns monthly reminder next date occurrence."""
+        """Returns monthly reminder next date occurrence (including reminder date)."""
         next_date = datetime(first_date.year, first_date.month, self._date.day)
         if next_date.date() < first_date:
             next_date += relativedelta(months=self._period)
         return next_date.date()
 
     def next_date_yearly(self, first_date: date):
-        """Returns yearly reminder next date occurrence."""
+        """Returns yearly reminder next date occurrence (including reminder date)."""
         next_date = datetime(first_date.year, self._date.month, self._date.day)
         if next_date.date() < first_date:
             next_date += relativedelta(years=self._period)
         return next_date.date()
 
     def next_date(self, first_date: date):
-        """Returns reminder next date occurrence."""
+        """Returns reminder next date occurrence (including reminder date)."""
         if self._frequency == "none":
             return  self.next_date_none(first_date)
         elif self._frequency == "daily":
@@ -243,42 +257,6 @@ class ReminderSensor(RestoreEntity):
             next_date = None
         return next_date
 
-    def find_reminder_date_none(self, first_date: date):
-        """Find possible reminder date, starting from date."""
-        if self._date < first_date:
-            return None
-        return first_date
-
-    def find_reminder_date_daily(self, first_date: date):
-        """Find possible daily reminder date, starting from date."""
-        return first_date
-
-    def find_reminder_date_weekly(self, first_date: date):
-        """Find possible daily reminder date, starting from date."""
-        return None
-
-    def find_reminder_date_monthly(self, first_date: date):
-        """Find possible daily reminder date, starting from date."""
-        return None
-
-    def find_reminder_date_yearly(self, first_date: date):
-        """Find possible daily reminder date, starting from date."""
-        return None
-
-    def find_reminder_date(self, first_date: date):
-        """Find possible reminder date, starting from date."""
-        if self._frequency == "none":
-            reminder_date = self.find_reminder_date_none(first_date)
-        elif self._frequency == "daily":
-            reminder_date = self.find_reminder_date_daily(first_date)
-        elif self._frequency == "weekly":
-            reminder_date = self.find_reminder_date_weekly(first_date)
-        elif self._frequency == "monthly":
-            reminder_date = self.find_reminder_date_monthly(first_date)
-        elif self._frequency == "yearly":
-            reminder_date = self.find_reminder_date_yearly(first_date)
-        return reminder_date if self.is_date_in_range(reminder_date) else None
-
     def fire_reminder_state(self):
         self._hass.bus.fire(EVENT_REMINDER, {
             "entity_id": self.unique_id, "state": self._state
@@ -294,8 +272,8 @@ class ReminderSensor(RestoreEntity):
         self._next_date = datetime.combine(next_date, self._time)
         self._remaining = (self._next_date.date() - now_date).days
         # Set state
-        reminder_date = self.find_reminder_date(now_date)
         new_state = STATE_OFF
+        reminder_date = self.next_date(now_date)
         if reminder_date and (reminder_date == now_date):
             new_state = STATE_ON if self.is_time_in_range(datetime.now()) else STATE_OFF
         if new_state != self._state:

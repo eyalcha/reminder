@@ -4,6 +4,7 @@
   "documentation": "",
   "issue_tracker": "",
   "dependencies": [],
+  "config_flow": true,
   "codeowners": [
     "@eyalcha"
   ],

@@ -7,7 +7,7 @@ import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 
 from homeassistant import config_entries
-from homeassistant.const import ATTR_HIDDEN, CONF_NAME, CONF_ICON
+from homeassistant.const import ATTR_HIDDEN, ATTR_FRIENDLY_NAME, CONF_NAME, CONF_ICON
 
 from homeassistant.helpers import discovery
 
@@ -19,6 +19,7 @@ from .const import (
     CONF_FREQUENCY,
     CONF_LAST_DATE,
     CONF_PERIOD,
+    CONF_PERIOD_TEMPLATE,
     CONF_SENSORS,
     CONF_STATE_TYPE,
     CONF_TAG,
@@ -39,6 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 
 SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
+    vol.Optional(ATTR_FRIENDLY_NAME): cv.string,
     vol.Required(CONF_DATE): cv.string,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_FREQUENCY, default=DEFAULT_FREQUENCY): vol.In(FREQUENCY_OPTIONS),
@@ -46,6 +48,7 @@ SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_FIRST_DATE): cv.string,
     vol.Optional(CONF_LAST_DATE): cv.string,
     vol.Optional(CONF_PERIOD, default=DEFAULT_PERIOD): cv.positive_int,
+    vol.Optional(CONF_PERIOD_TEMPLATE): cv.template,
     vol.Optional(ATTR_HIDDEN, default=False): cv.boolean,
     vol.Optional(CONF_TAG, default=DEFAULT_TAG): cv.string,
 })
