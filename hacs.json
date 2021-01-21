@@ -1,0 +1,10 @@
+{
+  "name": "Reminders",
+  "domains": [
+    "reminders",
+    "sensor"
+  ],
+  "homeassistant": "0.110.0",
+  "iot_class": "Local Push",
+  "render_readme": true
+}

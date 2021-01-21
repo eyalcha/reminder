@@ -1,0 +1,12 @@
+{
+  "domain": "reminder",
+  "name": "Reminder",
+  "documentation": "",
+  "issue_tracker": "",
+  "dependencies": [],
+  "codeowners": [
+    "@eyalcha"
+  ],
+  "requirements": [
+  ]
+}
