@@ -116,7 +116,6 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
                         {"name": CALENDAR_NAME},
                     )
                 )
-            _LOGGER.debug(f"Add entity {self.entity_id}")
             self.hass.data[DOMAIN][CALENDAR_PLATFORM].add_entity(self.entity_id)
 
     @property

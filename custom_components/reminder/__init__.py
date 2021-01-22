@@ -15,6 +15,7 @@ import voluptuous as vol
 
 from .const import (
     CONF_DATE,
+    CONF_EXCLUDE_DATES,
     CONF_FIRST_DATE,
     CONF_FREQUENCY,
     CONF_LAST_DATE,
@@ -51,6 +52,7 @@ SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_PERIOD_TEMPLATE): cv.template,
     vol.Optional(ATTR_HIDDEN, default=False): cv.boolean,
     vol.Optional(CONF_TAG, default=DEFAULT_TAG): cv.string,
+    vol.Optional(CONF_EXCLUDE_DATES): cv.ensure_list,
 })
 
 CONFIG_SCHEMA = vol.Schema({
