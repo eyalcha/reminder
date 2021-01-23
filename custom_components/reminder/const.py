@@ -18,10 +18,11 @@ BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 DEVICE_CLASS = "reminder__schedule"
 
 # Configuration
-CONF_EXPIRE_AFTER = "expire_after"
 CONF_DATE = "date"
+CONF_DATE_TEMPLATE = "date_template"
 CONF_DATE_FORMAT = "date_format"
 CONF_DESCRIPTION = "description"
+CONF_ENABLED = "enabled"
 CONF_PERIOD = "period"
 CONF_PERIOD_TEMPLATE = "period_template"
 CONF_EXCLUDE_DATES = "exclude_dates"
@@ -30,6 +31,7 @@ CONF_ICON_OFF = "icon_off"
 CONF_INCLUDE_DATES = "include_dates"
 CONF_FIRST_DATE = "first_date"
 CONF_FREQUENCY = "frequency"
+CONF_FREQUENCY_TEMPLATE = "frequency_template"
 CONF_LAST_DATE = "last_date"
 CONF_SENSORS = "sensors"
 CONF_STATE_TYPE = "state_type"
@@ -43,6 +45,7 @@ CONF_VERBOSE_STATE = "verbose_state"
 
 # Defaults
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+DEFAULT_ENABLED = True
 DEFAULT_FREQUENCY = "none"
 DEFAULT_ICON = 'mdi:calendar-blank'
 DEFAULT_ICON_ON = 'mdi:calendar-star'

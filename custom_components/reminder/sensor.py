@@ -10,7 +10,7 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
-from homeassistant.components.template.template_entity import TemplateEntity
+from homeassistant.exceptions import TemplateError
 
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -32,6 +32,7 @@ from .const import (
     CALENDAR_NAME,
     CALENDAR_PLATFORM,
     CONF_DATE,
+    CONF_DATE_TEMPLATE,
     CONF_DATE_FORMAT,
     CONF_DESCRIPTION,
     CONF_EXCLUDE_DATES,
@@ -39,9 +40,9 @@ from .const import (
     CONF_ICON_OFF,
     CONF_PERIOD,
     CONF_PERIOD_TEMPLATE,
-    CONF_EXPIRE_AFTER,
     CONF_FIRST_DATE,
     CONF_FREQUENCY,
+    CONF_FREQUENCY_TEMPLATE,
     CONF_INCLUDE_DATES,
     CONF_LAST_DATE,
     CONF_SUMMARY,
@@ -66,13 +67,11 @@ async def async_setup_platform(hass, _, async_add_entities, discovery_info=None)
     async_add_entities([ReminderSensor(hass, discovery_info)], True)
 
 
-class ReminderSensor(TemplateEntity, RestoreEntity):
+class ReminderSensor(RestoreEntity):
     """Reminder Sensor class."""
 
     def __init__(self, hass, config, title=None):
         """Initialize the Template Media player."""
-        super().__init__(
-        )
         self._config = config
         self._hass = hass
         self._hidden = config.get(ATTR_HIDDEN, False)
@@ -90,8 +89,10 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         self._icon_on = config.get(CONF_ICON_ON)
         self._icon_off = config.get(CONF_ICON_OFF)
         self._frequency = config.get(CONF_FREQUENCY)
+        self._frequency_template = config.get(CONF_FREQUENCY_TEMPLATE)
         self._date_format = config.get(CONF_DATE_FORMAT)
         self._date = self._to_date(config.get(CONF_DATE))
+        self._date_template = config.get(CONF_DATE_TEMPLATE)
         self._time_format = config.get(CONF_TIME_FORMAT)
         self._time = self._to_time(config.get(CONF_TIME))
         self._start_time = self._to_time(config.get(CONF_START_TIME))
@@ -100,10 +101,11 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         self._first_date = self._to_date(config.get(CONF_FIRST_DATE))
         self._exclude_dates = self._to_dates(config.get(CONF_EXCLUDE_DATES, []))
         self._include_dates = self._to_dates(config.get(CONF_INCLUDE_DATES, []))
-        exp = config.get(CONF_EXPIRE_AFTER)
-        self.expire_after = (
-            None if exp is None else datetime.strptime(exp, self._time_format).time()
-        )
+        for template in (self._period_template,
+           self._frequency_template,
+        ):
+            if template is not None:
+                template.hass = hass
 
     async def async_added_to_hass(self):
         """When sensor is added to hassio, add it to calendar."""
@@ -115,9 +117,6 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         self.hass.data[DOMAIN][SENSOR_PLATFORM][self.entity_id] = self
 
         state = await self.async_get_last_state()
-
-        if self._period_template is not None:
-            self.add_template_attribute("_period", self._period_template)
 
         if not self.hidden:
             if CALENDAR_PLATFORM not in self.hass.data[DOMAIN]:
@@ -222,6 +221,12 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
     @property
     def all_day(self) -> bool:
         return self._start_time is None and self._end_time is None
+
+    @property
+    def _templates_dict(self):
+        return {'_period': self._period_template,
+            '_date': self._date_template,
+            '_frequency': self._frequency_template}
 
     def _to_date(self, value: Any) -> str:
         """Convert str to dat."""
@@ -349,6 +354,29 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
 
     async def async_update(self) -> None:
         """Get the latest data and updates the states."""
+        # Update values from their templates.
+        for property_name, template in self._templates_dict.items():
+            try:
+                rendered_template = None
+                if template is not None:
+                    rendered_template = template.async_render()
+                if rendered_template is not None:
+                    setattr(self, property_name, rendered_template)
+            except TemplateError as ex:
+                friendly_property_name = property_name[1:].replace('_', ' ')
+                if ex.args and ex.args[0].startswith(
+                        "UndefinedError: 'None' has no attribute"):
+                    # Common during HA startup - so just a warning
+                    _LOGGER.warning('Could not render %s template %s,'
+                        ' the state is unknown.',
+                        friendly_property_name, self._name)
+                    continue
+                try:
+                    setattr(self, property_name, getattr(super(), property_name))
+                except AttributeError:
+                    _LOGGER.error('Could not render %s template %s: %s',
+                        friendly_property_name, self._name, ex)
+        # Find next date
         now_date = datetime.now().date()
         next_date = self._find_next_date(now_date)
         if not next_date:

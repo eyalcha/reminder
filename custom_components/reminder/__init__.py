@@ -15,11 +15,14 @@ import voluptuous as vol
 
 from .const import (
     CONF_DATE,
+    CONF_DATE_TEMPLATE,
     CONF_DATE_FORMAT,
     CONF_DESCRIPTION,
+    CONF_ENABLED,
     CONF_EXCLUDE_DATES,
     CONF_FIRST_DATE,
     CONF_FREQUENCY,
+    CONF_FREQUENCY_TEMPLATE,
     CONF_ICON_OFF,
     CONF_ICON_ON,
     CONF_INCLUDE_DATES,
@@ -34,6 +37,7 @@ from .const import (
     CONF_END_TIME,
     CONF_TIME_FORMAT,
     DEFAULT_DATE_FORMAT,
+    DEFAULT_ENABLED,
     DEFAULT_FREQUENCY,
     DEFAULT_ICON,
     DEFAULT_ICON_OFF,
@@ -52,12 +56,14 @@ _LOGGER = logging.getLogger(__name__)
 
 SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
-    vol.Required(CONF_DATE): cv.string,
+    vol.Optional(CONF_DATE): cv.string,
+    vol.Optional(CONF_DATE_TEMPLATE): cv.template,
     vol.Optional(CONF_DATE_FORMAT, default=DEFAULT_DATE_FORMAT): cv.string,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_ICON_ON, default=DEFAULT_ICON_ON): cv.string,
     vol.Optional(CONF_ICON_OFF, default=DEFAULT_ICON_OFF): cv.string,
     vol.Optional(CONF_FREQUENCY, default=DEFAULT_FREQUENCY): vol.In(FREQUENCY_OPTIONS),
+    vol.Optional(CONF_FREQUENCY_TEMPLATE): cv.template,
     vol.Optional(CONF_TIME): cv.string,
     vol.Optional(CONF_START_TIME): cv.string,
     vol.Optional(CONF_END_TIME): cv.string,
@@ -72,6 +78,7 @@ SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_DESCRIPTION): cv.string,
     vol.Optional(CONF_EXCLUDE_DATES): cv.ensure_list,
     vol.Optional(CONF_INCLUDE_DATES): cv.ensure_list,
+    vol.Optional(CONF_ENABLED, default=DEFAULT_ENABLED): cv.boolean,
 })
 
 CONFIG_SCHEMA = vol.Schema({
@@ -81,28 +88,6 @@ CONFIG_SCHEMA = vol.Schema({
 
 async def async_setup(hass, config):
     """Set up this component using YAML."""
-
-    # def handle_collect_garbage(call):
-    #     """Handle the service call."""
-    #     entity_id = call.data.get(CONF_ENTITY_ID)
-    #     last_collection = call.data.get(ATTR_LAST_COLLECTION)
-    #     _LOGGER.debug("called collect_garbage for %s", entity_id)
-    #     try:
-    #         entity = hass.data[DOMAIN][SENSOR_PLATFORM][entity_id]
-    #         if last_collection is None:
-    #             entity.last_collection = dt_util.now()
-    #         else:
-    #             entity.last_collection = dt_util.as_local(last_collection)
-    #     except Exception as err:
-    #         _LOGGER.error("Failed setting last collection for %s - %s", entity_id, err)
-    #     hass.services.call("homeassistant", "update_entity", {"entity_id": entity_id})
-
-    # if DOMAIN not in hass.services.async_services():
-    #     hass.services.async_register(
-    #         DOMAIN, "collect_garbage", handle_collect_garbage, schema=COLLECT_NOW_SCHEMA
-    #     )
-    # else:
-    #     _LOGGER.debug("Service already registered")
 
     if config.get(DOMAIN) is None:
         # We get here if the integration is set up using config flow
@@ -119,8 +104,8 @@ async def async_setup(hass, config):
             entry[CONF_NAME],
         )
         # If entry is not enabled, skip.
-        # if not entry[CONF_ENABLED]:
-        #     continue
+        if not entry[CONF_ENABLED]:
+            continue
         hass.async_create_task(
             discovery.async_load_platform(hass, SENSOR_PLATFORM, DOMAIN, entry, config)
         )
