@@ -7,7 +7,7 @@ import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 
 from homeassistant import config_entries
-from homeassistant.const import ATTR_HIDDEN, ATTR_FRIENDLY_NAME, CONF_NAME, CONF_ICON
+from homeassistant.const import ATTR_HIDDEN, CONF_NAME, CONF_ICON
 
 from homeassistant.helpers import discovery
 
@@ -15,21 +15,27 @@ import voluptuous as vol
 
 from .const import (
     CONF_DATE,
+    CONF_DATE_FORMAT,
+    CONF_DESCRIPTION,
     CONF_EXCLUDE_DATES,
     CONF_FIRST_DATE,
     CONF_FREQUENCY,
+    CONF_INCLUDE_DATES,
     CONF_LAST_DATE,
     CONF_PERIOD,
     CONF_PERIOD_TEMPLATE,
     CONF_SENSORS,
-    CONF_STATE_TYPE,
+    CONF_SUMMARY,
     CONF_TAG,
     CONF_TIME,
+    CONF_TIME_FORMAT,
+    DEFAULT_DATE_FORMAT,
     DEFAULT_FREQUENCY,
     DEFAULT_ICON,
     DEFAULT_PERIOD,
     DEFAULT_TAG,
     DEFAULT_TIME,
+    DEFAULT_TIME_FORMAT,
     DOMAIN,
     FREQUENCY_OPTIONS,
     SENSOR_PLATFORM,
@@ -41,18 +47,22 @@ _LOGGER = logging.getLogger(__name__)
 
 SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
-    vol.Optional(ATTR_FRIENDLY_NAME): cv.string,
     vol.Required(CONF_DATE): cv.string,
+    vol.Optional(CONF_DATE_FORMAT, default=DEFAULT_DATE_FORMAT): cv.string,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_FREQUENCY, default=DEFAULT_FREQUENCY): vol.In(FREQUENCY_OPTIONS),
     vol.Optional(CONF_TIME, default=DEFAULT_TIME): cv.string,
+    vol.Optional(CONF_TIME_FORMAT, default=DEFAULT_TIME_FORMAT): cv.string,
     vol.Optional(CONF_FIRST_DATE): cv.string,
     vol.Optional(CONF_LAST_DATE): cv.string,
     vol.Optional(CONF_PERIOD, default=DEFAULT_PERIOD): cv.positive_int,
     vol.Optional(CONF_PERIOD_TEMPLATE): cv.template,
     vol.Optional(ATTR_HIDDEN, default=False): cv.boolean,
     vol.Optional(CONF_TAG, default=DEFAULT_TAG): cv.string,
+    vol.Optional(CONF_SUMMARY): cv.string,
+    vol.Optional(CONF_DESCRIPTION): cv.string,
     vol.Optional(CONF_EXCLUDE_DATES): cv.ensure_list,
+    vol.Optional(CONF_INCLUDE_DATES): cv.ensure_list,
 })
 
 CONFIG_SCHEMA = vol.Schema({

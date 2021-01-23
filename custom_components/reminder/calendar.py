@@ -103,14 +103,31 @@ class EntitiesCalendarData:
                     end = start + timedelta(days=1)
                 except TypeError:
                     end = start
-                if reminder.expire_after is None:
+                if reminder.time is None:
                     event = {
                         "uid": entity,
-                        "summary": reminder.name,
+                        "summary": reminder.summary,
+                        "description": reminder.description,
                         "start": {"date": start.strftime("%Y-%m-%d")},
                         "end": {"date": end.strftime("%Y-%m-%d")},
                         "allDay": True,
                     }
+                else:
+                    event = {
+                        "uid": entity,
+                        "summary": reminder.name,
+                        "start": {
+                            "date": datetime.combine(
+                                start, reminder.time
+                            ).strftime("%Y-%m-%d %H:%M")
+                        },
+                        "end": {
+                            "date": datetime.combine(
+                                start, reminder.time
+                            ).strftime("%Y-%m-%d %H:%M")
+                        },
+                        "allDay": False,
+                    }                 
                 events.append(event)
                 start = await reminder.async_find_next_date(
                     start + timedelta(days=1), True
@@ -130,10 +147,12 @@ class EntitiesCalendarData:
             entity_id = min(next_dates.keys(), key=(lambda k: next_dates[k]))
             start = next_dates[entity_id]
             end = start + timedelta(days=1)
-            name = self._hass.data[DOMAIN][SENSOR_PLATFORM][entity_id].name
+            summary = self._hass.data[DOMAIN][SENSOR_PLATFORM][entity_id].summary
+            description = self._hass.data[DOMAIN][SENSOR_PLATFORM][entity_id].description
             self.event = {
                 "uid": entity_id,
-                "summary": name,
+                "summary": summary,
+                "description": description,
                 "start": {"date": start.strftime("%Y-%m-%d")},
                 "end": {"date": end.strftime("%Y-%m-%d")},
                 "allDay": True,
