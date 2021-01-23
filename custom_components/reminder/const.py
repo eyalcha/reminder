@@ -6,6 +6,7 @@ CALENDAR_NAME = "Reminders"
 SENSOR_PLATFORM = "sensor"
 CALENDAR_PLATFORM = "calendar"
 ATTRIBUTION = "Data from this is provided by reminder."
+ENTITY_ID_FORMAT = 'sensor' + '.{}'
 
 #
 ATTR_NEXT_DATE = "next_date"

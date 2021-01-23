@@ -115,7 +115,7 @@ class EntitiesCalendarData:
                 else:
                     event = {
                         "uid": entity,
-                        "summary": reminder.name,
+                        "summary": reminder.summary,
                         "start": {
                             "date": datetime.combine(
                                 start, reminder.start_time

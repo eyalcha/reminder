@@ -7,7 +7,7 @@ import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 
 from homeassistant import config_entries
-from homeassistant.const import ATTR_HIDDEN, CONF_NAME, CONF_ICON
+from homeassistant.const import ATTR_HIDDEN, ATTR_FRIENDLY_NAME, CONF_NAME, CONF_ICON
 
 from homeassistant.helpers import discovery
 
@@ -56,6 +56,7 @@ _LOGGER = logging.getLogger(__name__)
 
 SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
+    vol.Optional(ATTR_FRIENDLY_NAME): cv.string,
     vol.Optional(CONF_DATE): cv.string,
     vol.Optional(CONF_DATE_TEMPLATE): cv.template,
     vol.Optional(CONF_DATE_FORMAT, default=DEFAULT_DATE_FORMAT): cv.string,

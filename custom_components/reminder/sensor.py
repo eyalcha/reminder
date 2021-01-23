@@ -16,7 +16,7 @@ from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from homeassistant.const import (
-    ATTR_HIDDEN,
+    ATTR_HIDDEN, ATTR_FRIENDLY_NAME,
     CONF_ENTITIES, CONF_NAME, CONF_ICON,
     WEEKDAYS,
     STATE_ON,
@@ -54,6 +54,7 @@ from .const import (
     CONF_VERBOSE_STATE,
     DEVICE_CLASS,
     DOMAIN,
+    ENTITY_ID_FORMAT,
     SENSOR_PLATFORM,
 )
 
@@ -76,6 +77,7 @@ class ReminderSensor(RestoreEntity):
         self._hass = hass
         self._hidden = config.get(ATTR_HIDDEN, False)
         self._name = config.get(CONF_NAME)
+        self._friendly_name = config.get(ATTR_FRIENDLY_NAME)
         self._summary = self._name if config.get(CONF_SUMMARY) is None else config.get(CONF_SUMMARY)
         self._description = config.get(CONF_DESCRIPTION)
         self._next_date = None
@@ -136,9 +138,13 @@ class ReminderSensor(RestoreEntity):
             self.hass.data[DOMAIN][CALENDAR_PLATFORM].add_entity(self.entity_id)
 
     @property
-    def unique_id(self):
-        """Return a unique ID to use for this sensor."""
-        return self._config.get("unique_id", None)
+    def entity_id(self):
+        return ENTITY_ID_FORMAT.format(self._name.lower().replace(' ', '_'))
+
+    # @property
+    # def unique_id(self):
+    #     """Return a unique ID to use for this sensor."""
+    #     return self._config.get("unique_id", None)
 
     @property
     def device_info(self):
@@ -152,7 +158,7 @@ class ReminderSensor(RestoreEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return self._name
+        return self._friendly_name if self._friendly_name else self._name
 
     @property
     def hidden(self):
@@ -180,6 +186,8 @@ class ReminderSensor(RestoreEntity):
         if self._next_date is None:
             attribs[ATTR_NEXT_DATE] = None
             attribs[ATTR_NEXT_TIME] = None
+        elif self.all_day:
+             attribs[ATTR_NEXT_DATE] = self._next_date
         else:
             attribs[ATTR_NEXT_DATE] = datetime(
                 self._next_date.year, self._next_date.month, self._next_date.day,
