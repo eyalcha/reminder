@@ -14,6 +14,7 @@ from homeassistant.helpers import discovery
 import voluptuous as vol
 
 from .const import (
+    CONF_CALENDAR,
     CONF_DATE,
     CONF_DATE_TEMPLATE,
     CONF_DATE_FORMAT,
@@ -36,6 +37,7 @@ from .const import (
     CONF_START_TIME,
     CONF_END_TIME,
     CONF_TIME_FORMAT,
+    DEFAULT_CALENDAR,
     DEFAULT_DATE_FORMAT,
     DEFAULT_ENABLED,
     DEFAULT_FREQUENCY,
@@ -57,6 +59,7 @@ _LOGGER = logging.getLogger(__name__)
 SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(ATTR_FRIENDLY_NAME): cv.string,
+    vol.Optional(CONF_CALENDAR, default=DEFAULT_CALENDAR): cv.string,
     vol.Optional(CONF_DATE): cv.string,
     vol.Optional(CONF_DATE_TEMPLATE): cv.template,
     vol.Optional(CONF_DATE_FORMAT, default=DEFAULT_DATE_FORMAT): cv.string,

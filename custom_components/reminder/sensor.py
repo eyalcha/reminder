@@ -29,8 +29,8 @@ from .const import (
     ATTR_NEXT_DATE,
     ATTR_REMAINING,
     ATTR_TAG,
-    CALENDAR_NAME,
     CALENDAR_PLATFORM,
+    CONF_CALENDAR,
     CONF_DATE,
     CONF_DATE_TEMPLATE,
     CONF_DATE_FORMAT,
@@ -76,6 +76,7 @@ class ReminderSensor(RestoreEntity):
         self._config = config
         self._hass = hass
         self._hidden = config.get(ATTR_HIDDEN, False)
+        self._calendar = config.get(CONF_CALENDAR)
         self._name = config.get(CONF_NAME)
         self._friendly_name = config.get(ATTR_FRIENDLY_NAME)
         self._summary = self._name if config.get(CONF_SUMMARY) is None else config.get(CONF_SUMMARY)
@@ -125,14 +126,14 @@ class ReminderSensor(RestoreEntity):
                 self.hass.data[DOMAIN][CALENDAR_PLATFORM] = EntitiesCalendarData(
                     self.hass
                 )
-                _LOGGER.debug("Creating reminders calendar")
+                _LOGGER.debug(f"Creating {self.calendar} calendar")
                 self.hass.async_create_task(
                     async_load_platform(
                         self.hass,
                         CALENDAR_PLATFORM,
                         DOMAIN,
-                        {"name": CALENDAR_NAME},
-                        {"name": CALENDAR_NAME},
+                        {"name": self.calendar},
+                        {"name": self.calendar},
                     )
                 )
             self.hass.data[DOMAIN][CALENDAR_PLATFORM].add_entity(self.entity_id)
@@ -231,6 +232,10 @@ class ReminderSensor(RestoreEntity):
         return self._start_time is None and self._end_time is None
 
     @property
+    def calendar(self) -> str:
+        return self._calendar
+
+    @property
     def _templates_dict(self):
         return {'_period': self._period_template,
             '_date': self._date_template,
@@ -288,10 +293,14 @@ class ReminderSensor(RestoreEntity):
 
     def _next_date_daily(self, first_date: date):
         """Returns daily reminder next date occurrence (including reminder date)."""
-        return first_date + relativedelta(days=(self._period - 1))
+        if first_date < self._date:
+            return self._date
+        return first_date + relativedelta(days=(self._period - ((first_date - self._date).days % self._period) - 1))
         
     def _next_date_weekly(self, first_date: date):
         """Returns weekly reminder next date occurrence."""
+        if first_date < self._date:
+            return self._date        
         next_date = first_date + relativedelta(days=(self._date.weekday() - first_date.weekday()))
         if next_date < first_date:
             next_date += relativedelta(days=(7 * self._period))
@@ -299,6 +308,8 @@ class ReminderSensor(RestoreEntity):
 
     def _next_date_monthly(self, first_date: date):
         """Returns monthly reminder next date occurrence (including reminder date)."""
+        if first_date < self._date:
+            return self._date        
         next_date = datetime(first_date.year, first_date.month, self._date.day)
         if next_date.date() < first_date:
             next_date += relativedelta(months=self._period)
@@ -306,6 +317,8 @@ class ReminderSensor(RestoreEntity):
 
     def _next_date_yearly(self, first_date: date):
         """Returns yearly reminder next date occurrence (including reminder date)."""
+        if first_date < self._date:
+            return self._date        
         next_date = datetime(first_date.year, self._date.month, self._date.day)
         if next_date.date() < first_date:
             next_date += relativedelta(years=self._period)
@@ -342,6 +355,7 @@ class ReminderSensor(RestoreEntity):
         next_date = None
         while next_date is None:
             next_date = self._find_next_date(day1)
+            _LOGGER.debug(f"{self._date} {next_date}")
             # One time reminder
             if self._frequency == "none":
                 break

@@ -19,6 +19,7 @@ BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 DEVICE_CLASS = "reminder__schedule"
 
 # Configuration
+CONF_CALENDAR = "calendar"
 CONF_DATE = "date"
 CONF_DATE_TEMPLATE = "date_template"
 CONF_DATE_FORMAT = "date_format"
@@ -45,6 +46,7 @@ CONF_TIME_FORMAT = "time_format"
 CONF_VERBOSE_STATE = "verbose_state"
 
 # Defaults
+DEFAULT_CALENDAR = "Reminders"
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 DEFAULT_ENABLED = True
 DEFAULT_FREQUENCY = "none"
