@@ -103,7 +103,7 @@ class EntitiesCalendarData:
                     end = start + timedelta(days=1)
                 except TypeError:
                     end = start
-                if reminder.time is None:
+                if reminder.all_day:
                     event = {
                         "uid": entity,
                         "summary": reminder.summary,
@@ -118,12 +118,12 @@ class EntitiesCalendarData:
                         "summary": reminder.name,
                         "start": {
                             "date": datetime.combine(
-                                start, reminder.time
+                                start, reminder.start_time
                             ).strftime("%Y-%m-%d %H:%M")
                         },
                         "end": {
                             "date": datetime.combine(
-                                start, reminder.time
+                                start, reminder.end_time if reminder.end_time else reminder.start_time
                             ).strftime("%Y-%m-%d %H:%M")
                         },
                         "allDay": False,

@@ -35,6 +35,8 @@ from .const import (
     CONF_DATE_FORMAT,
     CONF_DESCRIPTION,
     CONF_EXCLUDE_DATES,
+    CONF_ICON_ON,
+    CONF_ICON_OFF,
     CONF_PERIOD,
     CONF_PERIOD_TEMPLATE,
     CONF_EXPIRE_AFTER,
@@ -44,6 +46,8 @@ from .const import (
     CONF_LAST_DATE,
     CONF_SUMMARY,
     CONF_TAG,
+    CONF_START_TIME,
+    CONF_END_TIME,
     CONF_TIME,
     CONF_TIME_FORMAT,
     CONF_VERBOSE_STATE,
@@ -83,11 +87,15 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         self._verbose_state = config.get(CONF_VERBOSE_STATE)
         self._state = STATE_OFF
         self._icon = config.get(CONF_ICON)
+        self._icon_on = config.get(CONF_ICON_ON)
+        self._icon_off = config.get(CONF_ICON_OFF)
         self._frequency = config.get(CONF_FREQUENCY)
         self._date_format = config.get(CONF_DATE_FORMAT)
         self._date = self._to_date(config.get(CONF_DATE))
         self._time_format = config.get(CONF_TIME_FORMAT)
         self._time = self._to_time(config.get(CONF_TIME))
+        self._start_time = self._to_time(config.get(CONF_START_TIME))
+        self._end_time = self._to_time(config.get(CONF_END_TIME))
         self._last_date = self._to_date(config.get(CONF_LAST_DATE))
         self._first_date = self._to_date(config.get(CONF_FIRST_DATE))
         self._exclude_dates = self._to_dates(config.get(CONF_EXCLUDE_DATES, []))
@@ -160,6 +168,10 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
     @property
     def icon(self):
         """Return the entity icon."""
+        if self._icon_on and self._state == STATE_ON:
+            return self._icon_on
+        elif self._icon_off and self._state == STATE_OFF:
+            return self._icon_off
         return self._icon
 
     @property
@@ -194,9 +206,22 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         return self._description
 
     @property
-    def time(self):
-        """Return reminder time."""
-        return self._time
+    def start_time(self):
+        """Return reminder start time."""
+        if self._start_time:
+            return self._start_time
+        return self._to_time("00:00")
+
+    @property
+    def end_time(self):
+        """Return reminder end time."""
+        if self._end_time and self._end_time < self.start_time:
+            return self.start_time + datetime.timedelta(hours=1)
+        return self._end_time
+
+    @property
+    def all_day(self) -> bool:
+        return self._start_time is None and self._end_time is None
 
     def _to_date(self, value: Any) -> str:
         """Convert str to dat."""
@@ -235,9 +260,11 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         """True if given time is within reminder time range."""
         if not t:
             return True
-        inside = False
-        if self._time and t.time() > self._time:
-            inside = True
+        inside = True
+        if self.start_time and t.time() < self.start_time:
+            inside = False
+        if self.end_time and t.time() > self.end_time:
+            inside = False
         return inside
 
     def _next_date_none(self, first_date: date):
@@ -311,7 +338,7 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
                     "(%s) Skipping exclude_date %s", self._name, next_date
                 )
                 next_date = None
-             # Look from the next day
+            # Look from the next day
             day1 += relativedelta(days=1)
         if self._first_date and next_date < self._first_date:
             next_date = self._find_next_date(self._first_date)
@@ -327,11 +354,11 @@ class ReminderSensor(TemplateEntity, RestoreEntity):
         if not next_date:
             return
         # Set attributes
-        self._next_date = datetime.combine(next_date, self._time)
+        self._next_date = datetime.combine(next_date, self.start_time)
         self._remaining = (self._next_date.date() - now_date).days
         # Set state
         new_state = STATE_OFF
-        reminder_date = self._find_next_date(now_date)
+        reminder_date = await self.async_find_next_date(now_date)
         if reminder_date and (reminder_date == now_date):
             new_state = STATE_ON if self._is_time_in_range(datetime.now()) else STATE_OFF
         if new_state != self._state:
