@@ -355,7 +355,6 @@ class ReminderSensor(RestoreEntity):
         next_date = None
         while next_date is None:
             next_date = self._find_next_date(day1)
-            _LOGGER.debug(f"{self._date} {next_date}")
             # One time reminder
             if self._frequency == "none":
                 break
