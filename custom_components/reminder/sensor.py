@@ -302,7 +302,9 @@ class ReminderSensor(RestoreEntity):
         """Returns daily reminder next date occurrence (including reminder date)."""
         if first_date < self._date:
             return self._date
-        return first_date + relativedelta(days=(self._period - ((first_date - self._date).days % self._period) - 1))
+        days_diff = (first_date - self._date).days
+        next_date = first_date + relativedelta(days=(self._period - (days_diff % self._period) - 1))
+        return next_date
         
     def _next_date_weekly(self, first_date: date):
         """Returns weekly reminder next date occurrence."""
@@ -316,11 +318,17 @@ class ReminderSensor(RestoreEntity):
     def _next_date_monthly(self, first_date: date):
         """Returns monthly reminder next date occurrence (including reminder date)."""
         if first_date < self._date:
-            return self._date        
-        next_date = datetime(first_date.year, first_date.month, self._date.day)
-        if next_date.date() < first_date:
-            next_date += relativedelta(months=self._period)
-        return next_date.date()
+            return self._date
+        _LOGGER.debug(f"First {first_date} Date {self._date} {self._period}")
+        # Months from reminder date (floor)
+        month_date = datetime(first_date.year, first_date.month, self._date.day)
+        months_diff = (month_date.year - self._date.year) * 12 + month_date.month - self._date.month
+        months_diff = self._period * int(months_diff / self._period)
+        # Next date
+        next_date = self._date + relativedelta(months=months_diff)
+        if next_date < first_date:
+            next_date = self._date + relativedelta(months=(months_diff + self._period))
+        return next_date
 
     def _next_date_yearly(self, first_date: date):
         """Returns yearly reminder next date occurrence (including reminder date)."""
@@ -362,6 +370,7 @@ class ReminderSensor(RestoreEntity):
         next_date = None
         while next_date is None:
             next_date = self._find_next_date(day1)
+            _LOGGER.debug(f"{next_date} {day1}")
             # One time reminder
             if self._frequency == "none":
                 break

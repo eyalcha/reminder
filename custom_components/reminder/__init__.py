@@ -112,10 +112,10 @@ async def async_setup(hass, config):
     hass.data[DOMAIN][DOMAIN_CONFIG] = config[DOMAIN]
 
     for entry in platform_config:
-        _LOGGER.debug(
-            "Setting %s from YAML configuration",
-            entry[CONF_NAME],
-        )
+        # _LOGGER.debug(
+        #     "Setting %s from YAML configuration",
+        #     entry[CONF_NAME],
+        # )
         # If entry is not enabled, skip.
         if not entry[CONF_ENABLED]:
             continue

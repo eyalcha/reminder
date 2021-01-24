@@ -17,7 +17,6 @@ async def async_setup_platform(
     hass, config, async_add_entities, discovery_info=None
 ):  # pylint: disable=unused-argument
     """Add calendar entities to HA, of there are calendar instances."""
-    _LOGGER.debug("Setup calendar")
     # Only single instance allowed
     if RemindersCalendar.instances == 0:
         async_add_entities([RemindersCalendar(hass)], True)
