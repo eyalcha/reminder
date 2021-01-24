@@ -30,6 +30,7 @@ from .const import (
     CONF_LAST_DATE,
     CONF_PERIOD,
     CONF_PERIOD_TEMPLATE,
+    CONF_PREFIX,
     CONF_SENSORS,
     CONF_SUMMARY,
     CONF_TAG,
@@ -48,6 +49,7 @@ from .const import (
     DEFAULT_TAG,
     DEFAULT_TIME_FORMAT,
     DOMAIN,
+    DOMAIN_CONFIG,
     FREQUENCY_OPTIONS,
     SENSOR_PLATFORM,
 )
@@ -86,7 +88,10 @@ SENSOR_CONFIG_SCHEMA = vol.Schema({
 })
 
 CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: {vol.Optional(CONF_SENSORS): vol.All(cv.ensure_list, [SENSOR_CONFIG_SCHEMA])}
+    DOMAIN: {
+        vol.Optional(CONF_SENSORS): vol.All(cv.ensure_list, [SENSOR_CONFIG_SCHEMA]),
+        vol.Optional(CONF_PREFIX): cv.string,
+    }
 }, extra=vol.ALLOW_EXTRA)
 
 
@@ -101,6 +106,10 @@ async def async_setup(hass, config):
     # If platform is not enabled, skip.
     if not platform_config:
         return False
+
+    # Platform global configurations
+    hass.data[DOMAIN] = {}
+    hass.data[DOMAIN][DOMAIN_CONFIG] = config[DOMAIN]
 
     for entry in platform_config:
         _LOGGER.debug(

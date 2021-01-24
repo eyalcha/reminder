@@ -2,11 +2,13 @@
 
 # Base component constants
 DOMAIN = "reminder"
+DOMAIN_CONFIG = "config"
 CALENDAR_NAME = "Reminders"
 SENSOR_PLATFORM = "sensor"
 CALENDAR_PLATFORM = "calendar"
 ATTRIBUTION = "Data from this is provided by reminder."
 ENTITY_ID_FORMAT = 'sensor' + '.{}'
+ENTITY_ID_PREFIX_FORMAT = 'sensor' + '.{}_{}'
 
 #
 ATTR_NEXT_DATE = "next_date"
@@ -36,7 +38,6 @@ CONF_FREQUENCY = "frequency"
 CONF_FREQUENCY_TEMPLATE = "frequency_template"
 CONF_LAST_DATE = "last_date"
 CONF_SENSORS = "sensors"
-CONF_STATE_TYPE = "state_type"
 CONF_SUMMARY = "summary"
 CONF_TAG = "tag"
 CONF_TIME = "time"
@@ -44,6 +45,7 @@ CONF_START_TIME = "start_time"
 CONF_END_TIME = "end_time"
 CONF_TIME_FORMAT = "time_format"
 CONF_VERBOSE_STATE = "verbose_state"
+CONF_PREFIX = "prefix"
 
 # Defaults
 DEFAULT_CALENDAR = "Reminders"

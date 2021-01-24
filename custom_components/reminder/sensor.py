@@ -40,6 +40,7 @@ from .const import (
     CONF_ICON_OFF,
     CONF_PERIOD,
     CONF_PERIOD_TEMPLATE,
+    CONF_PREFIX,
     CONF_FIRST_DATE,
     CONF_FREQUENCY,
     CONF_FREQUENCY_TEMPLATE,
@@ -54,7 +55,9 @@ from .const import (
     CONF_VERBOSE_STATE,
     DEVICE_CLASS,
     DOMAIN,
+    DOMAIN_CONFIG,
     ENTITY_ID_FORMAT,
+    ENTITY_ID_PREFIX_FORMAT,
     SENSOR_PLATFORM,
 )
 
@@ -104,6 +107,7 @@ class ReminderSensor(RestoreEntity):
         self._first_date = self._to_date(config.get(CONF_FIRST_DATE))
         self._exclude_dates = self._to_dates(config.get(CONF_EXCLUDE_DATES, []))
         self._include_dates = self._to_dates(config.get(CONF_INCLUDE_DATES, []))
+        self._prefix = self._hass.data[DOMAIN][DOMAIN_CONFIG].get(CONF_PREFIX)
         for template in (self._period_template,
            self._frequency_template,
         ):
@@ -140,7 +144,10 @@ class ReminderSensor(RestoreEntity):
 
     @property
     def entity_id(self):
-        return ENTITY_ID_FORMAT.format(self._name.lower().replace(' ', '_'))
+        if self._prefix:
+            return ENTITY_ID_PREFIX_FORMAT.format(self._prefix, self._name.lower().replace(' ', '_'))
+        else:
+            return ENTITY_ID_FORMAT.format(self._name.lower().replace(' ', '_'))
 
     # @property
     # def unique_id(self):
