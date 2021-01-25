@@ -12,6 +12,7 @@ ENTITY_ID_PREFIX_FORMAT = 'sensor' + '.{}_{}'
 
 # Sensor attributes
 ATTR_NEXT_DATE = "next_date"
+ATTR_NEXT_DATE_VERBOSE = "next_date_verbose"
 ATTR_DAYS = "days"
 ATTR_REMAINING = "remaining"
 ATTR_TAG = "tag"

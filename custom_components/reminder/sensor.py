@@ -27,6 +27,7 @@ from .calendar import EntitiesCalendarData
 
 from .const import (
     ATTR_NEXT_DATE,
+    ATTR_NEXT_DATE_VERBOSE,
     ATTR_REMAINING,
     ATTR_TAG,
     CALENDAR_PLATFORM,
@@ -50,7 +51,6 @@ from .const import (
     CONF_TAG,
     CONF_START_TIME,
     CONF_END_TIME,
-    CONF_TIME,
     CONF_TIME_FORMAT,
     CONF_VERBOSE_FORMAT,
     DEVICE_CLASS,
@@ -100,7 +100,6 @@ class ReminderSensor(RestoreEntity):
         self._date = self._to_date(config.get(CONF_DATE))
         self._date_template = config.get(CONF_DATE_TEMPLATE)
         self._time_format = config.get(CONF_TIME_FORMAT)
-        self._time = self._to_time(config.get(CONF_TIME))
         self._start_time = self._to_time(config.get(CONF_START_TIME))
         self._end_time = self._to_time(config.get(CONF_END_TIME))
         self._last_date = self._to_date(config.get(CONF_LAST_DATE))
@@ -149,11 +148,6 @@ class ReminderSensor(RestoreEntity):
         else:
             return ENTITY_ID_FORMAT.format(self._name.lower().replace(' ', '_'))
 
-    # @property
-    # def unique_id(self):
-    #     """Return a unique ID to use for this sensor."""
-    #     return self._config.get("unique_id", None)
-
     @property
     def device_info(self):
         """Return device info."""
@@ -166,7 +160,12 @@ class ReminderSensor(RestoreEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return self._friendly_name if self._friendly_name else self._name
+        if self._friendly_name:
+            return self._friendly_name
+        elif self._summary:
+            return self._summary
+        else:
+            return self._name
 
     @property
     def hidden(self):
@@ -189,17 +188,24 @@ class ReminderSensor(RestoreEntity):
 
     @property
     def device_state_attributes(self):
-        """Return the state attributes."""
+        """Return the sensor attributes."""
         attribs = {}
-        if self._next_date is None:
-            attribs[ATTR_NEXT_DATE] = None
-        elif self.all_day:
-             attribs[ATTR_NEXT_DATE] = self._next_date
-        else:
-            attribs[ATTR_NEXT_DATE] = datetime(
-                self._next_date.year, self._next_date.month, self._next_date.day,
-                self._next_date.hour, self._next_date.minute
-            ).astimezone()
+        if self._next_date:
+            if self.all_day:
+                attribs[ATTR_NEXT_DATE] = self._next_date
+            else:
+                attribs[ATTR_NEXT_DATE] = datetime(
+                    self._next_date.year, self._next_date.month, self._next_date.day,
+                    self._next_date.hour, self._next_date.minute
+                ).astimezone()
+            if self._remaining > 1:
+                attribs[ATTR_NEXT_DATE_VERBOSE] = self._verbose_format.format(
+                    date=attribs[ATTR_NEXT_DATE].strftime(self._date_format), days=self._remaining
+                    )
+            elif self._remaining == 1:
+                attribs[ATTR_NEXT_DATE_VERBOSE] = "tomorrow"
+            elif self._remaining == 0:
+                attribs[ATTR_NEXT_DATE_VERBOSE] = "today"
         attribs[ATTR_REMAINING] = self._remaining
         attribs[ATTR_TAG] = self._tag
         return attribs
@@ -308,8 +314,6 @@ class ReminderSensor(RestoreEntity):
         # If passed, move to next occurence
         if next_date < first_date:
             next_date += relativedelta(days=self._period)
-        # days_delta = self._period - (days_diff % self._period) - 1
-        # next_date = first_date + relativedelta(days=days_delta)
         return next_date
         
     def _next_date_weekly(self, first_date: date):
@@ -424,16 +428,17 @@ class ReminderSensor(RestoreEntity):
                         friendly_property_name, self._name, ex)
         # Find next date
         now_date = datetime.now().date()
-        next_date = self._find_next_date(now_date)
+        next_date = await self.async_find_next_date(now_date)
         if not next_date:
+            self._state = STATE_OFF
+            self._next_date = None
             return
         # Set attributes
         self._next_date = datetime.combine(next_date, self.start_time)
         self._remaining = (self._next_date.date() - now_date).days
         # Set state
         new_state = STATE_OFF
-        reminder_date = await self.async_find_next_date(now_date)
-        if reminder_date and (reminder_date == now_date):
+        if next_date and (next_date == now_date):
             new_state = STATE_ON if self._is_time_in_range(datetime.now()) else STATE_OFF
         if new_state != self._state:
             self._state = new_state
