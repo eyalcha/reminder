@@ -345,9 +345,9 @@ class ReminderSensor(RestoreEntity):
         years_delta = self._period * int(years_diff / self._period)
         next_date = self._date + relativedelta(years=years_delta)
         # If passed, move to next occurence
-        if next_date.date() < first_date:
+        if next_date < first_date:
             next_date += relativedelta(years=self._period)
-        return next_date.date()
+        return next_date
 
     def _find_next_date(self, first_date: date):
         """Returns reminder next date occurrence (including reminder date)."""
