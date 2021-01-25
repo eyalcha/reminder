@@ -302,8 +302,15 @@ class ReminderSensor(RestoreEntity):
         """Returns daily reminder next date occurrence (including reminder date)."""
         if first_date < self._date:
             return self._date
+        # Move reminder to first date range
         days_diff = (first_date - self._date).days
-        next_date = first_date + relativedelta(days=(self._period - (days_diff % self._period) - 1))
+        days_delta = self._period * int(days_diff / self._period)
+        next_date = self._date + relativedelta(days=days_delta)
+        # If passed, move to next occurence
+        if next_date < first_date:
+            next_date += relativedelta(days=self._period)
+        # days_delta = self._period - (days_diff % self._period) - 1
+        # next_date = first_date + relativedelta(days=days_delta)
         return next_date
         
     def _next_date_weekly(self, first_date: date):
@@ -319,15 +326,14 @@ class ReminderSensor(RestoreEntity):
         """Returns monthly reminder next date occurrence (including reminder date)."""
         if first_date < self._date:
             return self._date
-        _LOGGER.debug(f"First {first_date} Date {self._date} {self._period}")
-        # Months from reminder date (floor)
+        # Move reminder date to first date range
         month_date = datetime(first_date.year, first_date.month, self._date.day)
         months_diff = (month_date.year - self._date.year) * 12 + month_date.month - self._date.month
-        months_diff = self._period * int(months_diff / self._period)
-        # Next date
-        next_date = self._date + relativedelta(months=months_diff)
+        months_delta = self._period * int(months_diff / self._period)
+        next_date = self._date + relativedelta(months=months_delta)
+        # If passed, move to next occurence
         if next_date < first_date:
-            next_date = self._date + relativedelta(months=(months_diff + self._period))
+            next_date += relativedelta(months=self._period)
         return next_date
 
     def _next_date_yearly(self, first_date: date):
@@ -370,7 +376,6 @@ class ReminderSensor(RestoreEntity):
         next_date = None
         while next_date is None:
             next_date = self._find_next_date(day1)
-            _LOGGER.debug(f"{next_date} {day1}")
             # One time reminder
             if self._frequency == "none":
                 break
