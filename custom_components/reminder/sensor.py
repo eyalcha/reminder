@@ -52,7 +52,7 @@ from .const import (
     CONF_END_TIME,
     CONF_TIME,
     CONF_TIME_FORMAT,
-    CONF_VERBOSE_STATE,
+    CONF_VERBOSE_FORMAT,
     DEVICE_CLASS,
     DOMAIN,
     DOMAIN_CONFIG,
@@ -89,7 +89,7 @@ class ReminderSensor(RestoreEntity):
         self._tag = config.get(CONF_TAG)
         self._period = config.get(CONF_PERIOD)
         self._period_template = config.get(CONF_PERIOD_TEMPLATE)
-        self._verbose_state = config.get(CONF_VERBOSE_STATE)
+        self._verbose_format = config.get(CONF_VERBOSE_FORMAT)
         self._state = STATE_OFF
         self._icon = config.get(CONF_ICON)
         self._icon_on = config.get(CONF_ICON_ON)
@@ -193,7 +193,6 @@ class ReminderSensor(RestoreEntity):
         attribs = {}
         if self._next_date is None:
             attribs[ATTR_NEXT_DATE] = None
-            attribs[ATTR_NEXT_TIME] = None
         elif self.all_day:
              attribs[ATTR_NEXT_DATE] = self._next_date
         else:
@@ -339,8 +338,13 @@ class ReminderSensor(RestoreEntity):
     def _next_date_yearly(self, first_date: date):
         """Returns yearly reminder next date occurrence (including reminder date)."""
         if first_date < self._date:
-            return self._date        
-        next_date = datetime(first_date.year, self._date.month, self._date.day)
+            return self._date
+        # Move reminder date to first date range
+        year_date = datetime(first_date.year, self._date.month, self._date.day)
+        years_diff = year_date.year - self._date.year
+        years_delta = self._period * int(years_diff / self._period)
+        next_date = self._date + relativedelta(years=years_delta)
+        # If passed, move to next occurence
         if next_date.date() < first_date:
             next_date += relativedelta(years=self._period)
         return next_date.date()

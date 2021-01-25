@@ -38,6 +38,7 @@ from .const import (
     CONF_START_TIME,
     CONF_END_TIME,
     CONF_TIME_FORMAT,
+    CONF_VERBOSE_FORMAT,
     DEFAULT_CALENDAR,
     DEFAULT_DATE_FORMAT,
     DEFAULT_ENABLED,
@@ -48,6 +49,7 @@ from .const import (
     DEFAULT_PERIOD,
     DEFAULT_TAG,
     DEFAULT_TIME_FORMAT,
+    DEFAULT_VERBOSE_FORMAT,
     DOMAIN,
     DOMAIN_CONFIG,
     FREQUENCY_OPTIONS,
@@ -84,6 +86,7 @@ SENSOR_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_DESCRIPTION): cv.string,
     vol.Optional(CONF_EXCLUDE_DATES): cv.ensure_list,
     vol.Optional(CONF_INCLUDE_DATES): cv.ensure_list,
+    vol.Optional(CONF_VERBOSE_FORMAT, default=DEFAULT_VERBOSE_FORMAT): cv.string,
     vol.Optional(CONF_ENABLED, default=DEFAULT_ENABLED): cv.boolean,
 })
 

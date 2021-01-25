@@ -10,7 +10,7 @@ ATTRIBUTION = "Data from this is provided by reminder."
 ENTITY_ID_FORMAT = 'sensor' + '.{}'
 ENTITY_ID_PREFIX_FORMAT = 'sensor' + '.{}_{}'
 
-#
+# Sensor attributes
 ATTR_NEXT_DATE = "next_date"
 ATTR_DAYS = "days"
 ATTR_REMAINING = "remaining"
@@ -44,7 +44,7 @@ CONF_TIME = "time"
 CONF_START_TIME = "start_time"
 CONF_END_TIME = "end_time"
 CONF_TIME_FORMAT = "time_format"
-CONF_VERBOSE_STATE = "verbose_state"
+CONF_VERBOSE_FORMAT = "verbose_format"
 CONF_PREFIX = "prefix"
 
 # Defaults
@@ -59,6 +59,7 @@ DEFAULT_START_TIME = "00:00"
 DEFAULT_TIME_FORMAT = "%H:%M"
 DEFAULT_PERIOD = 1
 DEFAULT_TAG = "reminder"
+DEFAULT_VERBOSE_FORMAT = "on {date}, in {days} days"
 
 #
 FREQUENCY_OPTIONS = [
