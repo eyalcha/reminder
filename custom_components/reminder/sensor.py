@@ -203,9 +203,9 @@ class ReminderSensor(RestoreEntity):
                     date=attribs[ATTR_NEXT_DATE].strftime(self._date_format), days=self._remaining
                     )
             elif self._remaining == 1:
-                attribs[ATTR_NEXT_DATE_VERBOSE] = "tomorrow"
+                attribs[ATTR_NEXT_DATE_VERBOSE] = "Tomorrow"
             elif self._remaining == 0:
-                attribs[ATTR_NEXT_DATE_VERBOSE] = "today"
+                attribs[ATTR_NEXT_DATE_VERBOSE] = "Today"
         attribs[ATTR_REMAINING] = self._remaining
         attribs[ATTR_TAG] = self._tag
         return attribs
