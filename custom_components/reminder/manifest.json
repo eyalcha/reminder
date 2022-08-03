@@ -1,6 +1,7 @@
 {
   "domain": "reminder",
   "name": "Reminder",
+  "version": "1.0.0",
   "documentation": "",
   "issue_tracker": "",
   "dependencies": [],
